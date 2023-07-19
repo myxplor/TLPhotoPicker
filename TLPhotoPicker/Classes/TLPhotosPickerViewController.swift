@@ -379,12 +379,17 @@ extension TLPhotosPickerViewController {
     
     private func centerAtRect(image: UIImage?, rect: CGRect, bgColor: UIColor = UIColor.white) -> UIImage? {
         guard let image = image else { return nil }
-        UIGraphicsBeginImageContextWithOptions(rect.size, false, image.scale)
-        bgColor.setFill()
-        UIRectFill(CGRect(x: 0, y: 0, width: rect.size.width, height: rect.size.height))
-        image.draw(in: CGRect(x:rect.size.width/2 - image.size.width/2, y:rect.size.height/2 - image.size.height/2, width:image.size.width, height:image.size.height))
-        let result = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
+        
+        var format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+        let renderer = UIGraphicsImageRenderer(size: rect.size, format: format)
+        
+        let result = renderer.image { context in
+            bgColor.setFill()
+            UIRectFill(CGRect(x: 0, y: 0, width: rect.size.width, height: rect.size.height))
+            image.draw(in: CGRect(x:rect.size.width/2 - image.size.width/2, y:rect.size.height/2 - image.size.height/2, width:image.size.width, height:image.size.height))
+        }
+
         return result
     }
     
@@ -1342,17 +1347,21 @@ extension Array where Element == PopupConfigure {
 
 extension UIImage {
     public func colorMask(color:UIColor) -> UIImage {
-        var result: UIImage?
         let rect = CGRect(x:0, y:0, width:size.width, height:size.height)
-        UIGraphicsBeginImageContextWithOptions(rect.size, false, scale)
-        if let c = UIGraphicsGetCurrentContext() {
+        
+        var format = UIGraphicsImageRendererFormat()
+        format.scale = scale
+        let renderer = UIGraphicsImageRenderer(size: rect.size, format: format)
+        
+        let result = renderer.image { context in
+            let cgContext = context.cgContext
+            
             self.draw(in: rect)
-            c.setFillColor(color.cgColor)
-            c.setBlendMode(.sourceAtop)
-            c.fill(rect)
-            result = UIGraphicsGetImageFromCurrentImageContext()
+            cgContext.setFillColor(color.cgColor)
+            cgContext.setBlendMode(.sourceAtop)
+            cgContext.fill(rect)
         }
-        UIGraphicsEndImageContext()
-        return result ?? self
+        
+        return result
     }
 }
