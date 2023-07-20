@@ -420,10 +420,14 @@ extension UIImage {
         case .up:
             return self
         default:
-            UIGraphicsBeginImageContextWithOptions(size, false, scale)
-            draw(in: CGRect(origin: .zero, size: size))
-            let result = UIGraphicsGetImageFromCurrentImageContext()
-            UIGraphicsEndImageContext()
+            var format = UIGraphicsImageRendererFormat()
+            format.scale = scale
+            let renderer = UIGraphicsImageRenderer(size: size, format: format)
+            
+            let result = renderer.image { _ in
+                draw(in: CGRect(origin: .zero, size: size))
+            }
+            
             return result
         }
     }
